@@ -1,8 +1,8 @@
-from requests import session
 from typing import Annotated
 from app.models.auth_model import Users
 from app.schemas.auth_schemas import MessageResponse, UserRegister,UserLogin
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 from fastapi import HTTPException,status,Depends
 from fastapi.security import OAuth2PasswordBearer
 from app.core.database import get_db
@@ -28,7 +28,7 @@ def create_jwt_token(user_email):
 
 OAuth2_scheme=OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-def get_current_user(token:Annotated[str,Depends(OAuth2_scheme)],db:Annotated[session,Depends(get_db)]):
+def get_current_user(token:Annotated[str,Depends(OAuth2_scheme)],db:Annotated[Session,Depends(get_db)]):
     try:
         payload=jwt.decode(token,key=settings.JwtSecretKey,algorithms=[settings.HashAlgorithm])
         email=payload.get("sub")
@@ -75,4 +75,3 @@ async def authenticate_user(user_credentials:UserLogin,db):
         raise unautherised
     token=create_jwt_token(user_credentials.email)
     return {"access_token":token,"token_type":"bearer"}
-
