@@ -1,7 +1,7 @@
 
 from dotenv import load_dotenv
 from tavily import TavilyClient
-from core.config import settings
+from app.core.config import settings
 from fastapi import HTTPException,status
 
 if settings.TalivyApi:

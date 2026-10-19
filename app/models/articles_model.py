@@ -5,7 +5,7 @@ from sqlalchemy import String, Text, DateTime
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import UniqueConstraint
-from core.database import Base
+from app.core.database import Base
 
 
 class Chat(Base):
@@ -21,6 +21,13 @@ class Chat(Base):
 
 class ArticleSummary(Base):
     __tablename__ = "article_summaries"
+    __table_args__ = (
+        UniqueConstraint(
+            "chat_id",
+            "url",
+            name="uq_article_summaries_chat_url",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
@@ -36,7 +43,6 @@ class ArticleSummary(Base):
     url: Mapped[str] = mapped_column(
         String(2000),
         nullable=False,
-        unique=True,
         index=True,
     )
 

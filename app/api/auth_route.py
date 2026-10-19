@@ -1,7 +1,7 @@
 from fastapi import APIRouter,Depends,HTTPException,status
-from schemas.auth_schemas import MessageResponse,UserRegister,UserLogin,JWTResponse
-from core.database import get_db
-from services import auth_services
+from app.schemas.auth_schemas import MessageResponse,UserRegister,UserLogin,JWTResponse
+from app.core.database import get_db
+from app.services import auth_services
 
 auth_app=APIRouter(prefix='/auth',tags=['Authentication'])
 

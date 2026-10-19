@@ -1,4 +1,5 @@
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -30,7 +31,8 @@ class GeneratedIdea(BaseModel):
     differentiation: str
     similar_products: list[str] = Field(default_factory=list)
 
-    evidence: list[IdeaEvidence] = Field(default_factory=list)
+    supporting_evidence: list[IdeaEvidence] = Field(min_length=1)
+    personalization_rationale: str
 
     assumptions: list[str] = Field(default_factory=list)
 
@@ -48,22 +50,19 @@ class IdeaGenerationResponse(BaseModel):
     research_analysis_id: str
     generation_mode: IdeaMode
     overall_summary: str
-    ideas: list[GeneratedIdea] = Field(min_length=1)
+    ideas: list[GeneratedIdea] = Field(default_factory=list)
 
 
 class IdeaGenerationRequest(BaseModel):
-    landscape_analysis_id: str
+    request_id: UUID | None = None
+    landscape_analysis_id: UUID
     mode: IdeaMode = "new_product"
+    project_id: UUID | None = None
 
     number_of_ideas: int = Field(
         default=5,
         ge=1,
         le=10,
-    )
-
-    existing_project_description: str | None = Field(
-        default=None,
-        max_length=5000,
     )
 
 

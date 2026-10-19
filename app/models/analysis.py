@@ -5,7 +5,7 @@ from sqlalchemy import DateTime, String
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from core.database import Base
+from app.core.database import Base
 
 
 class LandscapeAnalysisRecord(Base):

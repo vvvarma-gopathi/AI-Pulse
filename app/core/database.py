@@ -1,5 +1,5 @@
 from enum import auto
-from core.config import settings
+from app.core.config import settings
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm import sessionmaker,declarative_base
 

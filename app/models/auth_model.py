@@ -1,4 +1,4 @@
-from core.database import Base
+from app.core.database import Base
 from sqlalchemy import String,DateTime
 from sqlalchemy.orm import Mapped,mapped_column
 from sqlalchemy import func,DateTime

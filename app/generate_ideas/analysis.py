@@ -2,20 +2,20 @@ import json
 import os
 import logging
 from uuid import UUID
-from websocket.manager import manager
+from app.websocket.manager import manager
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from core.config import settings
+from app.core.config import settings
 
-from models.articles_model import ArticleSummary
-from models.articles_model import DiscoveredProduct
-from models.analysis import LandscapeAnalysisRecord
-from LLM.llm import client
-from schemas.analysis_schemas import LandscapeAnalysis
-from generate_ideas.prompts.analysis_prompt import LANDSCAPE_SYSTEM_PROMPT
+from app.models.articles_model import ArticleSummary
+from app.models.articles_model import DiscoveredProduct
+from app.models.analysis import LandscapeAnalysisRecord
+from app.LLM.llm import client
+from app.schemas.analysis_schemas import LandscapeAnalysis
+from app.generate_ideas.prompts.analysis_prompt import LANDSCAPE_SYSTEM_PROMPT
 
 
 load_dotenv()
@@ -100,7 +100,9 @@ def build_research_context(
 
     if not articles:
         raise ValueError(
-            "No article summaries found for this research batch"
+            "No article summaries found for research batch "
+            f"{chat_id}. Verify that the chat ID is correct and "
+            "that article summaries were saved successfully."
         )
 
     article_ids = [article.id for article in articles]
@@ -295,6 +297,7 @@ async def generate_landscape_analysis(
         "prompt_version": record.prompt_version,
         "article_count": research_context["article_count"],
         "technology_count": research_context["technology_count"],
+        "research_context": research_context,
         "analysis": analysis.model_dump(mode="json"),
         "created_at": record.created_at.isoformat(),
     }

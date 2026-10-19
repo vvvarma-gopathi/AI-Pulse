@@ -2,12 +2,12 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from core.database import SessionLocal
-from models.articles_model import ArticleSummary
-from models.articles_model import DiscoveredProduct
-from websocket.manager import manager
-from start_productions.web_search import search_web
-from start_productions.query_generator import generate_discovery_queries
+from app.core.database import SessionLocal
+from app.models.articles_model import ArticleSummary
+from app.models.articles_model import DiscoveredProduct
+from app.websocket.manager import manager
+from app.start_productions.web_search import search_web
+from app.start_productions.query_generator import generate_discovery_queries
 
 async def discover_for_article(
     db: Session,

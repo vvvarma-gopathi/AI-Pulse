@@ -11,8 +11,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
-
-from app.database import Base
+from app.core.database import Base
 
 
 class IdeaGenerationRun(Base):
@@ -40,9 +39,56 @@ class IdeaGenerationRun(Base):
         index=True,
     )
 
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
     generation_mode: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
+    )
+
+    request_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        nullable=True,
+    )
+
+    request_payload: Mapped[dict] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=dict,
+    )
+
+    status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="running",
+    )
+
+    retrieval_status: Mapped[str] = mapped_column(
+        String(40),
+        nullable=False,
+        default="completed",
+    )
+
+    failure_code: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+
+    project_ids_used: Mapped[list] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=list,
+    )
+
+    supporting_article_references: Mapped[list] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=list,
     )
 
     model_name: Mapped[str] = mapped_column(
@@ -129,4 +175,12 @@ Index(
     "ix_project_ideas_generation_title",
     ProjectIdea.generation_id,
     ProjectIdea.title,
+)
+
+Index(
+    "uq_idea_generation_user_request",
+    IdeaGenerationRun.user_id,
+    IdeaGenerationRun.request_id,
+    unique=True,
+    postgresql_where=IdeaGenerationRun.request_id.is_not(None),
 )

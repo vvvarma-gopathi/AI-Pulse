@@ -1,4 +1,4 @@
-from models.articles_model import Chat
+from app.models.articles_model import Chat
 from sqlalchemy.orm import Session
 
 def create_chat_record(user_name:str,title:str,db:Session):

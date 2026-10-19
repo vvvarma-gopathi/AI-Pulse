@@ -1,17 +1,19 @@
 
-from ingestion.summery_prompt import SYSTEM_PROMPT,build_article_prompt
-from LLM.llm import client
+from app.ingestion.summery_prompt import SYSTEM_PROMPT,build_article_prompt
+from app.LLM.llm import client
 import logging
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from schemas.blog_schemas import ArticleSummary as ArticleSummarySchema
-from schemas.blog_schemas import ArticleSummaryResponse
+from app.schemas.blog_schemas import ArticleSummary as ArticleSummarySchema
+from app.schemas.blog_schemas import ArticleSummaryResponse
 from google.genai import types
-from models.articles_model import ArticleSummary,Chat
-from websocket.manager import manager
+from app.models.articles_model import ArticleSummary,Chat
+from app.websocket.manager import manager
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
-from ingestion.dependencies import create_chat_record
-from uuid import UUID
+from app.ingestion.dependencies import create_chat_record
+from uuid import UUID, uuid4
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -29,37 +31,42 @@ def save_article_summaries(
         if chat is None:
             raise ValueError(f"Chat does not exist: {chat_id}")
 
-        rows = [
-            ArticleSummary(
-                chat_id=chat.id,
-                title=item.title,
-                summary=item.summary,
-                url=item.url,
-                published_at=item.published_at,
-                technologies=item.technologies,
-            )
-            for item in articles
-        ]
+        unique_articles = {}
+        for item in articles:
+            unique_articles.setdefault(item.url, item)
 
-        if not rows:
+        if not unique_articles:
             return 0
 
-        db.add_all(rows)
+        rows = [
+            {
+                "id": uuid4(),
+                "chat_id": chat.id,
+                "title": item.title,
+                "summary": item.summary,
+                "url": item.url,
+                "published_at": item.published_at,
+                "technologies": item.technologies,
+                "created_at": datetime.now(timezone.utc),
+            }
+            for item in unique_articles.values()
+        ]
+        result = db.execute(
+            pg_insert(ArticleSummary)
+            .values(rows)
+            .on_conflict_do_nothing(
+                constraint="uq_article_summaries_chat_url"
+            )
+        )
         db.commit()
-        return len(rows)
+        return result.rowcount or 0
     except IntegrityError:
         db.rollback()
 
         logger.exception(
             "Database integrity error while saving article summaries"
         )
-
-        return {
-            "success": False,
-            "message": (
-                "Article summaries violate a database constraint."
-            ),
-        }
+        raise
 
     except SQLAlchemyError:
         db.rollback()
@@ -67,11 +74,7 @@ def save_article_summaries(
         logger.exception(
             "Database error while saving article summaries"
         )
-
-        return {
-            "success": False,
-            "message": "Failed to save article summaries.",
-        }
+        raise
 
 
 

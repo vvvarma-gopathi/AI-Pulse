@@ -1,17 +1,17 @@
 
 from urllib.parse import urlsplit
 from sqlalchemy.orm import Session
-from ingestion.queries import QUERY
-from ingestion.summerization import summarize_articles
-from ingestion.web_search import normalize_url, search_articles
-from websocket.manager import manager
+from app.ingestion.queries import QUERY
+from app.ingestion.summerization import summarize_articles
+from app.ingestion.web_search import normalize_url, search_articles
+from app.websocket.manager import manager
 
 
 # --------------------------------------------------
 # PROCESS SEARCH RESULTS
 # --------------------------------------------------
 
-def process_articles(results):
+def process_articles(results, search_query: str = QUERY):
     unique_articles = {}
 
     for item in results:
@@ -34,7 +34,7 @@ def process_articles(results):
             "normalized_url": normalized,
             "source_domain": urlsplit(original_url).netloc,
             "published_date": item.get("published_date"),
-            "search_query": QUERY,
+            "search_query": search_query,
             "relevance_score": item.get("score"),
             "snippet": snippet,
             "extracted_content": article_content,
@@ -52,13 +52,24 @@ def process_articles(results):
 # MAIN
 # --------------------------------------------------
 
-async def SearchTechArticals(user_name: str, db: Session):
+async def SearchTechArticals(
+    user_name: str,
+    db: Session,
+    research_conditions: str | None = None,
+):
+    search_query = QUERY
+    if research_conditions and research_conditions.strip():
+        search_query = (
+            f"{QUERY}\n\nAdditional research conditions:\n"
+            f"{research_conditions.strip()}"
+        )
+
     await manager.send_to_user(
         user_name=user_name,
         message={"data": "Searching the web for recent AI and IT news...."},
     )
-    results, usage = search_articles()
-    articles = process_articles(results)
+    results, usage = search_articles(search_query)
+    articles = process_articles(results, search_query)
     await manager.send_to_user(
         user_name=user_name,
         message={

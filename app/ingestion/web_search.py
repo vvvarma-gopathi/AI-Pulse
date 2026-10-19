@@ -1,6 +1,6 @@
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
-from start_productions.web_search import client
-from ingestion.queries import QUERY
+from app.start_productions.web_search import client
+from app.ingestion.queries import QUERY
 
 MAX_RESULTS = 5
 # --------------------------------------------------
@@ -44,9 +44,9 @@ def normalize_url(url):
 # SEARCH THE WEB
 # --------------------------------------------------
 
-def search_articles():
+def search_articles(query: str = QUERY):
     response = client.search(
-        query=QUERY,
+        query=query,
         topic="news",
         search_depth="basic",
         max_results=MAX_RESULTS,

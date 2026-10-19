@@ -1,13 +1,13 @@
 from collections.abc import Awaitable, Callable
-from typing import Any
 
 from fastapi import WebSocket
 from sqlalchemy.orm import Session
+from app.models.auth_model import Users
 
 
 # Context shared with each handler.
 Handler = Callable[
-    [dict, WebSocket, str, Session],
+    [dict, WebSocket, Users, Session],
     Awaitable[dict],
 ]
 
@@ -30,9 +30,9 @@ class WebSocketDispatcher:
         return decorator
 
     async def dispatch(
-        self, message, websocket, user_name, db
+        self, message, websocket, user, db
     ):
-        action = message.get("action")
+        action = message.get("action") or message.get("type")
 
         print("RECEIVED ACTION:", repr(action))
         print("REGISTERED ACTIONS:", list(self.handlers.keys()))
@@ -46,10 +46,17 @@ class WebSocketDispatcher:
                 "message": f"Unknown action: {action}",
             }
 
+        payload = message.get("data", message)
+        if not isinstance(payload, dict):
+            return {
+                "type": "error",
+                "message": "Expected a JSON object for the action data",
+            }
+
         return await handler(
-            message.get("data", {}),
+            payload,
             websocket,
-            user_name,
+            user,
             db,
         )
 

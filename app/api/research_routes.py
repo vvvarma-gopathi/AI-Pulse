@@ -1,16 +1,23 @@
 from fastapi import APIRouter,Depends,WebSocket,WebSocketDisconnect
+from fastapi.encoders import jsonable_encoder
 from typing import Annotated
-from core.database import get_db
+from app.core.database import get_db
 from sqlalchemy.orm import Session
-from websocket.manager import manager
-from websocket.dispatcher import dispatcher
-from websocket.handler import discover_products, research_for_articles,analyze_landscape
-from services.auth_services import get_current_user
+from app.websocket.manager import manager
+from app.websocket.dispatcher import dispatcher
+from app.websocket.handler import (
+    analyze_landscape,
+    discover_products,
+    generate_ideas,
+    research_for_articles,
+)
+from app.services.auth_services import get_current_user
 
 research_router=APIRouter(prefix="/research/ws",tags=["Research"])
 dispatcher.register("search_tech_articles")(research_for_articles)
 dispatcher.register("discover_products")(discover_products)
 dispatcher.register("analysis")(analyze_landscape)
+dispatcher.register("generate_ideas")(generate_ideas)
 
 @research_router.websocket("")
 async def authenticate_user(websocket:WebSocket,db:Annotated[Session,Depends(get_db)]):
@@ -26,6 +33,17 @@ async def authenticate_user(websocket:WebSocket,db:Annotated[Session,Depends(get
     await manager.connect(user_name, websocket)
 
     try:
+        await websocket.send_json(
+            {
+                "type": "connection_established",
+                "data": {
+                    "user_id": str(user.id),
+                    "username": user.user_name,
+                    "email": user.email,
+                },
+            }
+        )
+
         while True:
             message = await websocket.receive_json()
 
@@ -39,11 +57,11 @@ async def authenticate_user(websocket:WebSocket,db:Annotated[Session,Depends(get
             response = await dispatcher.dispatch(
                 message=message,
                 websocket=websocket,
-                user_name=user_name,
+                user=user,
                 db=db,
             )
 
-            await websocket.send_json(response)
+            await websocket.send_json(jsonable_encoder(response))
 
     except WebSocketDisconnect:
         pass

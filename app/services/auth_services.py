@@ -1,16 +1,16 @@
 from requests import session
 from typing import Annotated
-from models.auth_model import Users
-from schemas.auth_schemas import MessageResponse, UserRegister,UserLogin
+from app.models.auth_model import Users
+from app.schemas.auth_schemas import MessageResponse, UserRegister,UserLogin
 from sqlalchemy import select
 from fastapi import HTTPException,status,Depends
 from fastapi.security import OAuth2PasswordBearer
-from core.database import get_db
+from app.core.database import get_db
 from pwdlib import PasswordHash
 import jwt
 from jwt.exceptions import InvalidTokenError,PyJWTError
 from datetime import datetime,timedelta
-from core.config import settings
+from app.core.config import settings
 
 hash_password=PasswordHash.recommended()
 
