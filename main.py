@@ -29,6 +29,7 @@ app=FastAPI(version="1.0.0",title="AIPulse",lifespan=lifespan)
 origins = [
     "http://localhost:5173",
     "http://localhost:3000",
+    "https://ai-pulse-frontend-orcin.vercel.app"
 ]
 
 app.add_middleware(
